@@ -4,6 +4,7 @@ import fitz  # PyMuPDF
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -50,5 +51,9 @@ Return only the valid JSON. Do not add Markdown formatting like ```json.
 """)
 
     os.remove(file.filename)
+    
 
-    return {"summary": response.text}
+    cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
+    response_data = json.loads(cleaned_text)
+
+    return response_data

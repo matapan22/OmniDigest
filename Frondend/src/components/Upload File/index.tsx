@@ -5,7 +5,7 @@ const Upload = () => {
   //Add state to manage the drag-and-drop and the selected file
   const[isDragActive, setIsDragActive] = useState(false);
   const [uploadedFile, setUploadedFIle] = useState(null);
-  const [summary, setSummary] = useState("");
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Add the event handler functions
@@ -49,7 +49,7 @@ const Upload = () => {
     formData.append("file", uploadedFile);
 
     setLoading(true);
-    setSummary("");
+
 
     try {
       const response = await fetch("http://127.0.0.1:8000/summarize/", {
@@ -58,7 +58,8 @@ const Upload = () => {
       });
 
       const data = await response.json();
-      setSummary(data.summary);
+      setResult(data.summary);
+      setResult(data);
     } catch (error) {
       alert("Something went wrong: " + error.message);
     } finally {
@@ -83,7 +84,7 @@ const Upload = () => {
                 Upload Your File
               </h2>
               <p className="mb-12 text-base font-medium text-body-color">
-                Our support team will get back to you ASAP via email.
+                Upload the File you would like to summarize.
               </p>
               {/* === START: NEW FILE DROP BOX === */}
               <div
@@ -160,15 +161,51 @@ const Upload = () => {
                   {loading ? "Processing..":"Summarize File"}
                 </button>
                 {/* === RESULT SECTION === */}
-                {summary && (
-                  <div className="mt-10 rounded-lg bg-gray-100 p-8 dark:bg-gray-800">
-                    <h3 className="mb-4 text-xl font-bold text-black dark:text-white">
-                      Summary Result:
-                    </h3>
-                    <div className="prose dark:prose-invert max-w-none">
-                      <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
-                        {summary}
-                      </p>
+                {result && (
+                  <div className="mt-10 w-full max-w-3xl mx-auto">
+                    <div className="relative flex flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md dark:bg-gray-800 dark:text-white">
+                      
+                      {/* 1. HEADING SECTION */}
+                      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h5 className="mb-2 block font-sans text-xl font-semibold leading-snug tracking-normal text-blue-gray-900 antialiased text-indigo-600 dark:text-indigo-400">
+                          {result.heading}
+                        </h5>
+                      </div>
+
+                      {/* 2. KEYWORDS SECTION (BADGES) */}
+                      <div className="px-6 pt-4 pb-2">
+                        <div className="flex flex-wrap gap-2">
+                          {result.keywords.map((keyword, index) => (
+                            <span 
+                              key={index} 
+                              className="select-none rounded-full bg-indigo-50 py-1 px-3 text-xs font-bold uppercase text-indigo-600 transition-all hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300"
+                            >
+                              #{keyword}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 3. SUMMARY TEXT SECTION */}
+                      <div className="p-6">
+                        <div className="prose dark:prose-invert max-w-none">
+                          <p className="block font-sans text-base font-light leading-relaxed text-inherit antialiased">
+                            {result.summary_text}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* OPTIONAL: Footer Actions */}
+                      <div className="p-6 pt-0">
+                        <button
+                          className="rounded-xs bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(result.summary_text)}
+                        >
+                          Copy Summary
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 )}
