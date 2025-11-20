@@ -1,4 +1,4 @@
-import AboutSectionOne from "@/components/Upload File/index";
+import FileUpload from "@/components/Upload File/index";
 import Breadcrumb from "@/components/Common/Breadcrumb";
 
 import { Metadata } from "next";
@@ -16,7 +16,7 @@ const AboutPage = () => {
         pageName="PDF Summarizer"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. In varius eros eget sapien consectetur ultrices. Ut quis dapibus libero."
       />
-      <AboutSectionOne />
+      <FileUpload />
     </>
   );
 };
