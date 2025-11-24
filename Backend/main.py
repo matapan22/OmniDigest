@@ -3,13 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import uvicorn
-import fitz  # PyMuPDF
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import json
 import pypdf
-
+import asyncio
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -69,25 +68,29 @@ async def summarize_pdf(file: UploadFile = File(...)):
     
     if len(clean_full_text) < 10000:
         final_input_text = clean_full_text
+               
     else:
-        # === MAP PHASE (Summarize chunks) ===
+        # === MAP PHASE (Parallel) ===
         chunks = get_text_chunks(clean_full_text)
-        intermediate_summaries = []
-        
         print(f"Processing {len(chunks)} chunks...") # For debugging
-        
-        for i, chunk in enumerate(chunks):
-            # Prompt for chunks: Just get the facts, no formatting needed yet.
-            chunk_prompt = f"Summarize this section of a larger document in detail. Focus on key facts and data points: \n\n{chunk}"
-            
-            try:
-                response = model.generate_content(chunk_prompt)
-                intermediate_summaries.append(response.text)
-            except Exception as e:
-                print(f"Error on chunk {i}: {e}")
-                continue
 
-        # Combine the mini-summaries
+        # 1. Define a helper for a SINGLE chunk call
+        async def process_chunk(chunk, index):
+            try:
+                # Use the Async version of Gemini if available, 
+                # or wrap the sync call in a thread executor
+                prompt = f"Summarize this section: {chunk}"
+                response = await model.generate_content_async(prompt) # Gemini supports async!
+                return response.text
+            except Exception as e:
+                print(f"Error on chunk {index}: {e}")
+                return ""
+
+        # 2. Fire all requests at once
+        tasks = [process_chunk(chunk, i) for i, chunk in enumerate(chunks)]
+        intermediate_summaries = await asyncio.gather(*tasks)
+
+        # Combine results
         final_input_text = "\n".join(intermediate_summaries)
 
     # === REDUCE PHASE (Final Polish) ===
