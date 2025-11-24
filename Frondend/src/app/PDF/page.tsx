@@ -14,7 +14,7 @@ const AboutPage = () => {
     <>
       <Breadcrumb
         pageName="PDF Summarizer"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. In varius eros eget sapien consectetur ultrices. Ut quis dapibus libero."
+        description="Your personal AI reading assistant—because life is too short for long PDFs."
       />
       <FileUpload />
     </>

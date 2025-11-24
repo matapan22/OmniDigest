@@ -33,7 +33,7 @@ async def summarize(file: UploadFile = File(...)):
 
     pdf_text = extract_text_from_pdf(file.filename)
 
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     response = model.generate_content(f"""
 Analyze the text below and return a JSON object with exactly three keys: "heading", "keywords", and "summary_text".
 

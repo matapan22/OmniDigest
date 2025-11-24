@@ -18,7 +18,7 @@ const Hero = () => {
                   Overwhelmed by hours of lectures, meetings, and reports? OmniDigest is your single solution for turning information overload into instant understanding. Upload any file PDFs, audio, or video and our AI will deliver a clear, concise summary. Get the key insights you need, in the exact tone you want, and reclaim your time. Whether you're studying for exams or preparing for a presentation, stop wading through content and start understanding it.</p>
                 <div className="flex flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
                   <Link
-                    href="https://nextjstemplates.com/templates/saas-starter-startup"
+                    href="/PDF"
                     className="rounded-xs bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80"
                   >
                     Lets Summarize..!!
