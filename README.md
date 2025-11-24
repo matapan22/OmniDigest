@@ -13,5 +13,5 @@ OmniDigest is a full-stack AI application designed to solve information overload
 ### 🛠️ Built With
 * **Frontend:** Next.js 14, Tailwind CSS, TypeScript
 * **Backend:** Python, FastAPI, Uvicorn
-* **AI:** Google Gemini 1.5 Flash
+* **AI:** Google Gemini 1.5 Flash, Google Gemini 2.5 Flash, Google Gemini 2.5 Pro
 * **Deployment:** AWS / Vercel (planned)
