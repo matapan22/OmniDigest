@@ -12,7 +12,7 @@ import asyncio
 
 origins = [
     "http://localhost:3000",
-    "hhttps://main.d39f9d9deskfjr.amplifyapp.com/" 
+    "hhttps://main.d39f9d9deskfjr.amplifyapp.com" 
 ]
 
 load_dotenv()
