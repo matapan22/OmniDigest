@@ -10,6 +10,11 @@ import json
 import pypdf
 import asyncio
 
+origins = [
+    "http://localhost:3000",
+    "hhttps://main.d39f9d9deskfjr.amplifyapp.com/" 
+]
+
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
