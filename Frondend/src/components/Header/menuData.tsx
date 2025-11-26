@@ -33,7 +33,7 @@ const menuData: Menu[] = [
       {
         id: 42,
         title: "Youtube Video Summary",
-        path: "/error",
+        path: "/workinprogress",
         newTab: false,
       },
     ],
