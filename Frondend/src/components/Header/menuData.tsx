@@ -36,6 +36,12 @@ const menuData: Menu[] = [
         path: "/workinprogress",
         newTab: false,
       },
+      {
+        id: 42,
+        title: "Word Cloud Generator",
+        path: "/workinprogress",
+        newTab: false,
+      },
     ],
   },
 ];
