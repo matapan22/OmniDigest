@@ -26,14 +26,14 @@ const menuData: Menu[] = [
     submenu: [
       {
         id: 41,
-        title: "PDF Summarization",
-        path: "/PDF",
+        title: "PDF Summarizer",
+        path: "/pdf-summarizer",
         newTab: false,
       },
       {
         id: 42,
         title: "Youtube Video Summary",
-        path: "/workinprogress",
+        path: "/youtube-summarizer",
         newTab: false,
       },
       {
