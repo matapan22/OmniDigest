@@ -65,13 +65,19 @@ export function YoutubePage() {
               />
             </div>
             <div className="flex justify-center">
-              <button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className="flex w-full items-center justify-center rounded-md bg-red-600 px-9 py-4 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-red-700 hover:shadow-signUp"
-              >
-                {isLoading ? "Watching Video..." : "Summarize Video"}
-              </button>
+                              <button
+                  onClick={handleSubmit}
+                  disabled={isLoading} // Button is "off" if no file is selected
+                  className={`
+                    rounded-md px-9 py-4 text-base font-medium text-white transition duration-300 ease-in-out
+                    ${!isLoading
+                      ? "rounded-xs bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80" 
+                      : "bg-gray-400 cursor-not-allowed opacity-50"
+                    }
+                  `}
+                >
+                  {isLoading ? "Watching Video...":"Summarize Video"}
+                </button>
             </div>
           </div>
 
