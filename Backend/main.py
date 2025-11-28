@@ -11,9 +11,7 @@ import pypdf
 import asyncio
 from youtube_transcript_api import YouTubeTranscriptApi
 import urllib.parse
-import requests
-import random
-
+from json import JSONDecodeError
 
 
 
@@ -214,6 +212,7 @@ async def summarize_youtube(request: YouTubeRequest):
     1. "heading": A catchy title for the video.
     2. "keywords": A list of 5-10 topics discussed.
     3. "summary_text": A detailed summary of the video content.
+    - CRITICAL: Do NOT use double quotes (") inside the summary text. Use single quotes (') instead to ensure valid JSON format.
     
     Input Transcript:
     "{clean_transcript[:30000]}" 
@@ -239,4 +238,9 @@ async def summarize_youtube(request: YouTubeRequest):
     except Exception as e:
         print(f"Gemini Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate summary from AI")
+    
+    except JSONDecodeError:
+        print("\n❌ JSON DECODE ERROR!")
+        print(f"Raw Invalid JSON from Gemini:\n{response.text}") # <--- Look at this in terminal!
+        raise HTTPException(status_code=500, detail="AI generated invalid format. Check terminal logs.")
     
