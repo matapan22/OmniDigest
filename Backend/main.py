@@ -47,88 +47,33 @@ def get_video_id(url: str):
 
 
 def get_transcript_text(video_id: str):
-    """
-    Fetches transcript by dynamically finding 'Healthy' Piped servers.
-    """
-    # 1. Hardcoded Fallbacks (Servers known to be stable-ish)
-    # We use these if the dynamic list fails.
-    server_pool = [
-        "https://pipedapi.drgns.space",
-        "https://pipedapi.smnz.de",
-        "https://api.piped.privacydev.net",
-        "https://pipedapi.systemless.xyz"
-    ]
-
-    # 2. Try to get a FRESH list of active servers
+    print(f"DEBUG: Attempting to fetch transcript for {video_id}...")
     try:
-        print("🔍 Fetching list of active servers...")
-        list_resp = requests.get("https://piped-instances.kavin.rocks", timeout=3)
-        
-        if list_resp.status_code == 200:
-            data = list_resp.json()
-            # Filter: Must be UP (True), use HTTPS, and have an API URL
-            dynamic_servers = [
-                entry['api_url'] for entry in data 
-                if entry.get('up') is True and entry.get('api_url', '').startswith('https')
-            ]
-            
-            if dynamic_servers:
-                print(f"✅ Found {len(dynamic_servers)} active servers.")
-                # Shuffle to spread the load
-                random.shuffle(dynamic_servers)
-                # Take top 5 dynamic ones and add our hardcoded ones to the end
-                server_pool = dynamic_servers[:5] + server_pool
+        transcript_list = YouTubeTranscriptApi()
+        transcript_list.fetch(video_id)
+        fetched_transcript = transcript_list.fetch(video_id)
+
+        # is iterable
+        formatter = []
+        for snippet in fetched_transcript:
+            print(snippet.text)
+            formatter.append(snippet.text)
+
+        full_text = " ".join(formatter)
+        print(f"DEBUG: Successfully fetched {len(full_text)} characters.")
+        return full_text
+
+
+        # indexable
+        last_snippet = fetched_transcript[-1]
+
+        # provides a length
+        snippet_count = len(fetched_transcript)
     except Exception as e:
-        print(f"⚠️ Could not fetch dynamic server list ({e}). Using fallbacks.")
-
-    # 3. Loop through the pool until one works
-    last_error = None
-    
-    for base_url in server_pool:
-        try:
-            print(f"🚀 Trying server: {base_url} ...")
-            
-            # Request Metadata
-            response = requests.get(f"{base_url}/streams/{video_id}", timeout=5)
-            
-            if response.status_code != 200:
-                print(f"   ❌ Failed ({response.status_code})")
-                continue 
-
-            data = response.json()
-            subtitles = data.get('subtitles', [])
-
-            if not subtitles:
-                print("   ❌ No subtitles found on this server.")
-                continue
-
-            # Find English
-            selected_sub = None
-            for sub in subtitles:
-                if 'en' in sub['code']:
-                    selected_sub = sub
-                    break
-            
-            if not selected_sub:
-                selected_sub = subtitles[0] # Fallback
-
-            # Download Text
-            sub_response = requests.get(selected_sub['url'], timeout=5)
-            sub_data = sub_response.json()
-            
-            # Combine
-            full_text = " ".join([line['content'] for line in sub_data])
-            
-            print(f"✅ Success! Got transcript from {base_url}")
-            return full_text
-
-        except Exception as e:
-            print(f"   ❌ Connection Error: {e}")
-            last_error = e
-            continue
-
-    # If we get here, absolutely nothing worked
-    raise HTTPException(status_code=400, detail=f"All servers failed. Last error: {str(last_error)}")
+        # This print statement is CRITICAL. 
+        # Look at your VS Code terminal to see what 'e' actually is.
+        print(f"DEBUG ERROR: {e}")
+        return ""
 
 
 def clean_text(text: str) -> str:
@@ -274,10 +219,24 @@ async def summarize_youtube(request: YouTubeRequest):
     "{clean_transcript[:30000]}" 
     """
     # Note: We limit to 30k chars to be safe. You can use your chunking logic here if you want later.
+    try:
+        # === THE FIX STARTS HERE ===
+        response = model.generate_content(
+            final_prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        # DEBUG: Print what Gemini actually sent back
+        # This helps if it crashes again
+        print(f"Gemini Raw Output: {response.text[:200]}...") 
+
+        # Clean up Markdown formatting if Gemini adds it (e.g. ```json )
+        cleaned_response = response.text.replace("```json", "").replace("```", "").strip()
+        
+        return json.loads(cleaned_response)
+        # === THE FIX ENDS HERE ===
+
+    except Exception as e:
+        print(f"Gemini Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate summary from AI")
     
-    response = model.generate_content(
-        final_prompt,
-        generation_config={"response_mime_type": "application/json"}
-    )
-    
-    return json.loads(response.text)
