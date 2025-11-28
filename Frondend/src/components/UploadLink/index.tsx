@@ -1,78 +1,39 @@
 "use client";
 import React, { useState } from "react";
 
-const Upload = () => {
-  //Add state to manage the drag-and-drop and the selected file
-  const[isDragActive, setIsDragActive] = useState(false);
-  const [uploadedFile, setUploadedFIle] = useState(null);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+export function YoutubePage() {
+  const [url, setUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
 
-  // Add the event handler functions
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setIsDragActive(true);
-    } else if (e.type === "dragleave") {
-      setIsDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setUploadedFIle(e.dataTransfer.files[0]);
-      // TODO: Add your file upload logic here
-    }
-  };
-
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      setUploadedFIle(e.target.files[0]);
-      // TODO: Add your file upload logic here
-    }
-  };
-
+  // Use your env variable
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   const handleSubmit = async () => {
-    if (!uploadedFile) {
-      alert("Please select a file first!");
-      return;
-    }
-    
-    const formData = new FormData();
-    formData.append("file", uploadedFile);
+    if (!url) return alert("Please enter a YouTube URL");
 
-    setLoading(true);
-
+    setIsLoading(true);
+    setResult(null);
 
     try {
-      // This says: "Use the AWS URL if it exists; otherwise, use localhost for my testing."
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-      const response = await fetch(`${API_BASE_URL}/summarize/`, {
+      const response = await fetch(`${API_BASE_URL}/summarize-youtube/`, {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: url }),
       });
 
-      const data = await response.json();
-      setResult(data.summary);
-      setResult(data);
-    } catch (error) {
-      alert("Something went wrong: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-    // This is where you will eventually send the file to your backend
-    console.log("Sending file to backend:", uploadedFile.name);
-    alert(`Starting summary for: ${uploadedFile.name}`);
-  };
+      if (!response.ok) throw new Error("Failed to summarize video");
 
+      const data = await response.json();
+      setResult(data);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <section id="Upload" className="overflow-hidden flex py-16 md:py-20 lg:py-15">
       <div className="container">
@@ -89,80 +50,37 @@ const Upload = () => {
               <p className="mb-12 text-base font-medium text-body-color">
                 Paste the link to the video you would like to summarize.
               </p>
-              {/* === START: NEW FILE DROP BOX === */}
-              <div
-                className={`mt-8 border-2 border-dashed rounded-lg p-10 text-center transition-colors duration-200
-                ${isDragActive
-                    ? "border-primary bg-primary/10" // Assumes 'primary' is a color in your tailwind.config.js
-                    : "border-gray-300 dark:border-gray-600"
-                  }`}
-                onDragEnter={handleDrag}
-                onDragOver={handleDrag}
-                onDragLeave={handleDrag}
-                onDrop={handleDrop}
+              {/* INPUT CARD */}
+          <div className="rounded-sm bg-white p-8 shadow-three dark:bg-gray-dark sm:p-[55px]">
+            <div className="mb-6">
+              <label className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                YouTube URL
+              </label>
+              <input
+                type="text"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+              />
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="flex w-full items-center justify-center rounded-md bg-red-600 px-9 py-4 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-red-700 hover:shadow-signUp"
               >
-                {/* This input is hidden but accessible for clicks and screen readers */}
-                <input
-                  type="file"
-                  id="file-upload"
-                  className="hidden"
-                  onChange={handleChange}
-                  accept="application/pdf" // Specify file types
-                />
+                {isLoading ? "Watching Video..." : "Summarize Video"}
+              </button>
+            </div>
+          </div>
 
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  {/* Upload Icon (SVG) */}
-                  <svg
-                    className="w-12 h-12 mx-auto text-gray-400"
-                    stroke="currentColor"
-                    fill="none"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8m0-8h8m-8 0h-8m-12-8v12a4 4 0 01-4 4H4a4 4 0 01-4-4V12a4 4 0 014-4h8"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
 
-                  <p className="mt-4 text-gray-500 dark:text-gray-400">
-                    <span className="font-medium text-primary">
-                      Click to upload
-                    </span>{" "}
-                    or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    PDF Only
-                  </p>
-                </label>
-              </div>
 
-              {/* Show file name after upload */}
-              {uploadedFile && (
-                <div className="mt-4 text-center">
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    File selected: {uploadedFile.name}
-                  </p>
-                </div>
-              )}
-              {/* === END: NEW FILE DROP BOX === */}
+
+
               {/* Button Section */}
               <div className="mt-8 flex flex-col items-center justify-center">
-                <button
-                  onClick={handleSubmit}
-                  disabled={!uploadedFile || loading} // Button is "off" if no file is selected
-                  className={`
-                    rounded-md px-9 py-4 text-base font-medium text-white transition duration-300 ease-in-out
-                    ${uploadedFile && !loading
-                      ? "rounded-xs bg-primary px-8 py-4 text-base font-semibold text-white duration-300 ease-in-out hover:bg-primary/80" 
-                      : "bg-gray-400 cursor-not-allowed opacity-50"
-                    }
-                  `}
-                >
-                  {loading ? "Processing..":"Summarize File"}
-                </button>
                 {/* === RESULT SECTION === */}
                 {result && (
                   <div className="mt-10 w-full max-w-3xl mx-auto">
@@ -221,4 +139,4 @@ const Upload = () => {
   );
 };
 
-export default Upload;
+export default YoutubePage;

@@ -9,6 +9,13 @@ import os
 import json
 import pypdf
 import asyncio
+from youtube_transcript_api import YouTubeTranscriptApi
+import urllib.parse
+import requests
+import random
+
+
+
 
 origins = [
     "http://localhost:3000",
@@ -26,6 +33,102 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def get_video_id(url: str):
+    """Extracts video ID from a YouTube URL"""
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.hostname == 'youtu.be':
+        return parsed_url.path[1:]
+    if parsed_url.hostname in ('www.youtube.com', 'youtube.com'):
+        if parsed_url.path == '/watch':
+            p = urllib.parse.parse_qs(parsed_url.query)
+            return p['v'][0]
+    return None
+
+
+def get_transcript_text(video_id: str):
+    """
+    Fetches transcript by dynamically finding 'Healthy' Piped servers.
+    """
+    # 1. Hardcoded Fallbacks (Servers known to be stable-ish)
+    # We use these if the dynamic list fails.
+    server_pool = [
+        "https://pipedapi.drgns.space",
+        "https://pipedapi.smnz.de",
+        "https://api.piped.privacydev.net",
+        "https://pipedapi.systemless.xyz"
+    ]
+
+    # 2. Try to get a FRESH list of active servers
+    try:
+        print("🔍 Fetching list of active servers...")
+        list_resp = requests.get("https://piped-instances.kavin.rocks", timeout=3)
+        
+        if list_resp.status_code == 200:
+            data = list_resp.json()
+            # Filter: Must be UP (True), use HTTPS, and have an API URL
+            dynamic_servers = [
+                entry['api_url'] for entry in data 
+                if entry.get('up') is True and entry.get('api_url', '').startswith('https')
+            ]
+            
+            if dynamic_servers:
+                print(f"✅ Found {len(dynamic_servers)} active servers.")
+                # Shuffle to spread the load
+                random.shuffle(dynamic_servers)
+                # Take top 5 dynamic ones and add our hardcoded ones to the end
+                server_pool = dynamic_servers[:5] + server_pool
+    except Exception as e:
+        print(f"⚠️ Could not fetch dynamic server list ({e}). Using fallbacks.")
+
+    # 3. Loop through the pool until one works
+    last_error = None
+    
+    for base_url in server_pool:
+        try:
+            print(f"🚀 Trying server: {base_url} ...")
+            
+            # Request Metadata
+            response = requests.get(f"{base_url}/streams/{video_id}", timeout=5)
+            
+            if response.status_code != 200:
+                print(f"   ❌ Failed ({response.status_code})")
+                continue 
+
+            data = response.json()
+            subtitles = data.get('subtitles', [])
+
+            if not subtitles:
+                print("   ❌ No subtitles found on this server.")
+                continue
+
+            # Find English
+            selected_sub = None
+            for sub in subtitles:
+                if 'en' in sub['code']:
+                    selected_sub = sub
+                    break
+            
+            if not selected_sub:
+                selected_sub = subtitles[0] # Fallback
+
+            # Download Text
+            sub_response = requests.get(selected_sub['url'], timeout=5)
+            sub_data = sub_response.json()
+            
+            # Combine
+            full_text = " ".join([line['content'] for line in sub_data])
+            
+            print(f"✅ Success! Got transcript from {base_url}")
+            return full_text
+
+        except Exception as e:
+            print(f"   ❌ Connection Error: {e}")
+            last_error = e
+            continue
+
+    # If we get here, absolutely nothing worked
+    raise HTTPException(status_code=400, detail=f"All servers failed. Last error: {str(last_error)}")
 
 
 def clean_text(text: str) -> str:
@@ -139,3 +242,42 @@ async def summarize_pdf(file: UploadFile = File(...)):
             print("Raw Gemini Output:", response.text) 
         raise HTTPException(status_code=500, detail="Failed to generate final summary")
     
+
+class YouTubeRequest(BaseModel):
+    url: str
+
+@app.post("/summarize-youtube/")
+async def summarize_youtube(request: YouTubeRequest):
+    # 1. Get Video ID
+    video_id = get_video_id(request.url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+    
+    # 2. Get Transcript
+    transcript_text = get_transcript_text(video_id)
+    
+    # 3. Clean the text (using your existing helper)
+    clean_transcript = clean_text(transcript_text)
+    
+    # 4. Summarize (Direct Prompt)
+    final_prompt = f"""
+    Act as a professional content analyst. 
+    Analyze the YouTube video transcript below.
+    
+    Return a JSON object with exactly three keys: "heading", "keywords", and "summary_text".
+    
+    1. "heading": A catchy title for the video.
+    2. "keywords": A list of 5-10 topics discussed.
+    3. "summary_text": A detailed summary of the video content.
+    
+    Input Transcript:
+    "{clean_transcript[:30000]}" 
+    """
+    # Note: We limit to 30k chars to be safe. You can use your chunking logic here if you want later.
+    
+    response = model.generate_content(
+        final_prompt,
+        generation_config={"response_mime_type": "application/json"}
+    )
+    
+    return json.loads(response.text)
