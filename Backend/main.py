@@ -16,8 +16,9 @@ from json import JSONDecodeError
 
 
 origins = [
-    "http://localhost:3000",
-    "hhttps://main.d39f9d9deskfjr.amplifyapp.com" 
+    "http://localhost:3000", 
+    "https://www.omnidigest.de",
+    "https://omnidigest.de"
 ]
 
 load_dotenv()
