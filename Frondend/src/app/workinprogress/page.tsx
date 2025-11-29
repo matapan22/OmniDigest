@@ -26,10 +26,10 @@ const ErrorPage = () => {
                         />
                 </div>
                 <h3 className="mb-4 text-3xl font-bold text-black dark:text-white sm:text-4xl">
-                  We're digesting something big.
+                  We&apos;re digesting something big.
                 </h3>
                 <p className="mb-10 text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed">
-                  We're busy building the next generation of productivity tools. This page is currently a work in progress, but we promise the wait will be worth it.
+                  We&apos;re busy building the next generation of productivity tools. This page is currently a work in progress, but we promise the wait will be worth it.
                 </p>
                 <Link
                   href="/"
