@@ -47,7 +47,7 @@ const AboutSectionTwo = () => {
                   Structured Smart Data
                 </h3>
                 <p className="text-base font-medium leading-relaxed text-body-color sm:text-lg sm:leading-relaxed">
-                  We don't just dump text. OmniDigest extracts distinct keywords, generates catchy headings, and organizes insights into a clean, readable format that’s ready to export.
+                  We don&apos;t just dump text. OmniDigest extracts distinct keywords, generates catchy headings, and organizes insights into a clean, readable format that&apos;s ready to export.
                 </p>
               </div>
             </div>
