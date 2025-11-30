@@ -12,6 +12,8 @@ import asyncio
 from youtube_transcript_api import YouTubeTranscriptApi
 import urllib.parse
 from json import JSONDecodeError
+import requests
+import random
 
 
 
@@ -73,6 +75,7 @@ def get_transcript_text(video_id: str):
         # Look at your VS Code terminal to see what 'e' actually is.
         print(f"DEBUG ERROR: {e}")
         return ""
+
 
 
 def clean_text(text: str) -> str:
