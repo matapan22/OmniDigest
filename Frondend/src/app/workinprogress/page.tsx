@@ -4,8 +4,8 @@ import Image from "next/image";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Error Page | Free Next.js Template for Startup and SaaS",
-  description: "This is Error Page for Startup Nextjs Template",
+  title: "Work In Progress | OmniDigest",
+  description: "This page is currently a work in progress",
   // other metadata
 };
 
